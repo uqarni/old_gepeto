@@ -11,7 +11,7 @@ def raw_promptr(file, cycles = 1):
     import pandas as pd
 
     #openai credentials
-    apikey = "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"
+    apikey = ""
     openai.api_key = apikey
 
     #create header and footer. initalize body.
