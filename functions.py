@@ -28,7 +28,7 @@ def uploader(prompt_responses_file_path):
     file_name = prompt_responses_file_path
     import openai
 
-    apikey = "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"
+    apikey = ""
     openai.api_key = apikey
 
     send = openai.File.create(
