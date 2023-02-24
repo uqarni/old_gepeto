@@ -1,8 +1,10 @@
 import pandas as pd
+import jsonlines
 
+#input is dataframe and output is a list of strings
 def cleaner(df):
     #take df and return jsonl file
-    jsonlz = ""
+    jsonlz = []
     for index,row in df.iterrows():
         raw_data = row["raw text"]
 
@@ -11,42 +13,61 @@ def cleaner(df):
                 start = index
             elif i == "}":
                 end = index
-                jsonlz = jsonlz + raw_data[start:(end+1)]
-                jsonlz = jsonlz + "\n"
+                content = raw_data[start:(end+1)]
 
+                jsonlz.append(raw_data[start:(end+1)])
+                              
     return jsonlz
 
-# df = pd.read_csv('training_data_5.csv')
-# only_jsonls = cleaner(df)
-# final_training_data = open("cleansed_training_data_2.jsonl", "x")
-# final_training_data.write(only_jsonls)
-# print(final_training_data.read())
 
 
-def uploader(prompt_responses_file_path):
-    #upload it to openai
-    file_name = prompt_responses_file_path
+
+#input is a list of strings and output is an ID of the file in openai's databasee
+def uploader(list_of_strings):
+    import jsonlines
+    import json
     import openai
 
-    apikey = ""
+    with open('output.jsonl', 'w') as f:
+    # iterate over the list of strings
+        for s in list_of_strings:
+            try: 
+                # convert string to dictionary
+                d = json.loads(s)
+                # write dictionary to file
+                json.dump(d, f)
+                # add newline character to separate dictionaries
+                f.write('\n')
+            except ValueError:
+                pass
+
+    apikey = "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"
     openai.api_key = apikey
 
+    #upload it to openai
     send = openai.File.create(
-        file=open(file_name, "rb"),
+        file=open("fine_tune_file_2.jsonl", "rb"),
         purpose='fine-tune'
     )
 
     return send["id"]
 
-test = uploader("cleansed_training_data_2.jsonl")
+test = uploader(cleaner(pd.read_csv("training_data_6.csv")))
+print(test)
     
 
 def file_status(file_id):
     status = 'foo'
     return status
 
-def fine_tuner(file_id, model):
-    task_id = "foo"
+
+#file-mPNvw5BZK8leRai3eajrD38o for first fine tune attempt
+def fine_tuner(file_id, model="davinci"):
+    import openai
+    openai.FineTune.create(
+        training_file= file_id, 
+        model = "davinci", 
+        suffix = "weaknesses_1")
     return task_id
 
 def model_status(task_id):
