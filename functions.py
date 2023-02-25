@@ -1,7 +1,10 @@
 import pandas as pd
 import jsonlines
+import openai
+apikey = "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"
+openai.api_key = apikey
 
-#input is dataframe and output is a list of strings
+#DONE input is dataframe and output is a list of strings
 def cleaner(df):
     #take df and return jsonl file
     jsonlz = []
@@ -22,7 +25,7 @@ def cleaner(df):
 
 
 
-#input is a list of strings and output is an ID of the file in openai's databasee
+#DONE input is a list of strings and output is an ID of the file in openai's databasee
 def uploader(list_of_strings):
     import jsonlines
     import json
@@ -52,27 +55,45 @@ def uploader(list_of_strings):
 
     return send["id"]
 
-test = uploader(cleaner(pd.read_csv("training_data_6.csv")))
-print(test)
-    
-
-def file_status(file_id):
-    status = 'foo'
-    return status
-
 
 #file-mPNvw5BZK8leRai3eajrD38o for first fine tune attempt
 def fine_tuner(file_id, model="davinci"):
     import openai
-    openai.FineTune.create(
-        training_file= file_id, 
-        model = "davinci", 
-        suffix = "weaknesses_1")
-    return task_id
+    apikey = "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"
+    openai.api_key = apikey
 
-def model_status(task_id):
-    model_id = "foo"
-    return model_id
+    send = openai.FineTune.create(
+        training_file= file_id, 
+        model = model, 
+        suffix = "weaknesses_1")
+    output = {
+        "fine-tuning id": send["id"],
+        "status": send["events"][0]["message"]
+    }
+    print(output)
+    return output
+    
+def model_status(ft_id):
+    send = openai.FineTune.retrieve(ft_id)
+    output = {
+        "model": send["model"],
+        "fine_tuned_model": send["fine_tuned_model"],
+        "status": send["status"]
+    }
+    print(output)
+    return output
+
+test = model_status(ft_id)
 
 def query_model(model_id, prompt, tokens = 200):
-    return 0
+    send = openai.Completion.create(
+        model = model_id,
+        prompt = prompt,
+        max_tokens = tokens)
+    
+    output = send["choices"][0]["text"]
+    print(output)
+    return output
+    
+
+test = query_model(model_id = "davinci:ft-personal:weaknesses-1-2023-02-25-21-28-09", prompt = "What do I say if I'm too old?", tokens = 50)
