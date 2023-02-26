@@ -1,2 +1,2 @@
 # promptr
-takes in a text file and returns prompt-response pairs for openai fine-tuning
+take in a txt file and result in fine-tuned model
