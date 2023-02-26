@@ -1,11 +1,59 @@
 import pandas as pd
 import jsonlines
 import openai
-apikey = "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"
+apikey = ""
 openai.api_key = apikey
 
-#DONE input is dataframe and output is a list of strings
-def cleaner(df):
+#input is a txt file and output a data frame with one column titled 'raw text'
+def raw_pr(file, cycles = 5):
+    import openai
+    import pandas as pd
+
+    #openai credentials
+    apikey = ""
+    openai.api_key = apikey
+
+    #create header and footer. initalize body.
+    topic = "talking about your weaknesses in a job interview"
+    header = "The text below is an excerpt from a document on " + topic + ":\n\n\""
+    body = ""
+    footer = "\"\n\nConvert the above text into prompt-completion pairs to train a chatbot in JSONL format:\n\n"
+    format = "{\"prompt\": \"Question?\",\"completion\": Answer to question from above text. ENDEND\"}\n\nProvide 3 prompt-completion pairs in this format on consecutive lines."
+   
+    training_data = pd.DataFrame()
+    training_data["raw text"] = ""
+
+    #determine max characters for the body
+    max_prompt_tokens = 400
+    max_body_chars = max_prompt_tokens*3.5 - len(header + footer + format)
+    max_response_tokens = 400
+
+    # open text file, read lines, remove all lines with just \n. save as var list text
+    with open(file) as f:
+        contents = f.readlines()
+        i = len(training_data.index)
+        for cycle in range(0,cycles):
+            for line in contents:
+                if len(body+line) <= max_body_chars:
+                    body = body + line
+                else:
+                    #query openai
+                    prompt = header + body + footer + format
+
+                    response = openai.Completion.create(
+                        model= "text-davinci-003",
+                        prompt= prompt,
+                        max_tokens = max_response_tokens)
+                    #extract prompts and responses
+                    training_data.loc[i, "raw text"] = response["choices"][0]["text"]
+                    i+=1
+                    #reset body
+                    body = ""
+        print("a data frame with one column, titled 'raw text', that has strings")
+        return training_data
+
+#input is dataframe and output is a list of strings
+def pr_cleaner(df):
     #take df and return jsonl file
     jsonlz = []
     for index,row in df.iterrows():
@@ -22,11 +70,8 @@ def cleaner(df):
                               
     return jsonlz
 
-
-
-
-#DONE input is a list of strings and output is an ID of the file in openai's databasee
-def uploader(list_of_strings):
+#input is a list of strings and output is an ID of the file in openai's databasee
+def pr_uploader(list_of_strings):
     import jsonlines
     import json
     import openai
@@ -44,7 +89,7 @@ def uploader(list_of_strings):
             except ValueError:
                 pass
 
-    apikey = "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"
+    apikey = ""
     openai.api_key = apikey
 
     #upload it to openai
@@ -52,14 +97,13 @@ def uploader(list_of_strings):
         file=open("fine_tune_file_2.jsonl", "rb"),
         purpose='fine-tune'
     )
-
+    print(send["id"])
     return send["id"]
 
-
-#file-mPNvw5BZK8leRai3eajrD38o for first fine tune attempt
+#input is openAI file ID and model, output is dictionary with keys: fine-tuning id and status
 def fine_tuner(file_id, model="davinci"):
     import openai
-    apikey = "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"
+    apikey = ""
     openai.api_key = apikey
 
     send = openai.FineTune.create(
@@ -72,7 +116,8 @@ def fine_tuner(file_id, model="davinci"):
     }
     print(output)
     return output
-    
+
+#input is openAI model ID, output is dictionary with keys: model, fine-tune model, and status     
 def model_status(ft_id):
     send = openai.FineTune.retrieve(ft_id)
     output = {
@@ -83,8 +128,7 @@ def model_status(ft_id):
     print(output)
     return output
 
-test = model_status(ft_id)
-
+#input is fine-tune model id, prompt as string, and # of tokens
 def query_model(model_id, prompt, tokens = 200):
     send = openai.Completion.create(
         model = model_id,
@@ -95,5 +139,3 @@ def query_model(model_id, prompt, tokens = 200):
     print(output)
     return output
     
-
-test = query_model(model_id = "davinci:ft-personal:weaknesses-1-2023-02-25-21-28-09", prompt = "What do I say if I'm too old?", tokens = 50)
