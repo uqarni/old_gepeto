@@ -52,6 +52,7 @@ def raw_pr(file, cycles = 5):
         print("a data frame with one column, titled 'raw text', that has strings")
         return training_data
 
+      
 #input is dataframe and output is a list of strings
 def pr_cleaner(df):
     #take df and return jsonl file
@@ -70,6 +71,7 @@ def pr_cleaner(df):
                               
     return jsonlz
 
+  
 #input is a list of strings and output is an ID of the file in openai's databasee
 def pr_uploader(list_of_strings):
     import jsonlines
@@ -100,6 +102,7 @@ def pr_uploader(list_of_strings):
     print(send["id"])
     return send["id"]
 
+  
 #input is openAI file ID and model, output is dictionary with keys: fine-tuning id and status
 def fine_tuner(file_id, model="davinci"):
     import openai
@@ -117,6 +120,7 @@ def fine_tuner(file_id, model="davinci"):
     print(output)
     return output
 
+  
 #input is openAI model ID, output is dictionary with keys: model, fine-tune model, and status     
 def model_status(ft_id):
     send = openai.FineTune.retrieve(ft_id)
@@ -128,6 +132,7 @@ def model_status(ft_id):
     print(output)
     return output
 
+  
 #input is fine-tune model id, prompt as string, and # of tokens
 def query_model(model_id, prompt, tokens = 200):
     send = openai.Completion.create(
